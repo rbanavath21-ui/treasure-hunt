@@ -100,6 +100,8 @@ const riddles = [
     }
 ];
 
+// --- THE RIDDLE CHAIN ---
+app.locals.totalSteps = riddles.length;
 // --- ROUTES ---
 
 // 1. The Home / Landing Page

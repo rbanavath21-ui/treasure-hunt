@@ -3,136 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Enigma Project</title>
+    <title>The Enigma Project: Saga</title>
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #050505;
-            --panel-bg: #111;
-            --primary-glow: #00ffcc; 
-            --text-main: #e0e0e0;
-            --error-color: #ff3366; 
+            --bg-color: #05050a;
+            --primary-glow: #00ffcc;
             --success-color: #33ff33;
-            --hint-color: #ffcc00; 
+            --node-locked: #222;
         }
 
-        body { 
-            font-family: 'Share Tech Mono', monospace; 
-            background-color: var(--bg-color); 
-            color: var(--text-main); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            overflow: hidden; 
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: var(--bg-color); font-family: 'Share Tech Mono', monospace;
+            overflow: hidden; color: white;
         }
 
-        /* --- UI OVERLAY & CONTAINERS --- */
-        .game-container { 
-            background-color: var(--panel-bg); 
-            width: 90%; 
-            max-width: 600px; 
-            padding: 50px; 
-            border-radius: 4px; 
-            border: 1px solid #333; 
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.05); 
-            text-align: center; 
-            animation: fadeIn 0.8s ease-in-out; 
-            position: relative; 
-            z-index: 100; 
+        /* --- SAGA VIEWPORT --- */
+        .map-viewport {
+            width: 100vw; height: 100vh;
+            overflow-y: auto; overflow-x: hidden;
+            position: relative;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #05050a 100%);
+            scroll-behavior: smooth;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-        h1 { color: var(--primary-glow); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
-        .hint-box { background: rgba(0, 255, 204, 0.1); border-left: 4px solid var(--primary-glow); padding: 15px; margin-bottom: 25px; color: var(--primary-glow); font-size: 1.1em; text-transform: uppercase; }
-        .riddle-text { font-size: 1.4em; line-height: 1.6; margin-bottom: 40px; color: #fff; }
-        
-        input[type="text"] { width: 80%; padding: 15px; margin-bottom: 20px; background: #000; border: 1px solid #444; color: var(--primary-glow); font-family: 'Share Tech Mono', monospace; font-size: 1.2em; text-align: center; outline: none; transition: 0.3s; }
-        input[type="text"]:focus { border-color: var(--primary-glow); box-shadow: 0 0 15px rgba(0, 255, 204, 0.4); }
-        
-        button.submit-btn { background-color: var(--bg-color); color: var(--primary-glow); padding: 12px 40px; border: 1px solid var(--primary-glow); font-family: 'Share Tech Mono', monospace; font-size: 1.2em; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
-        button.submit-btn:hover { background-color: var(--primary-glow); color: #000; box-shadow: 0 0 20px var(--primary-glow); }
-
-        .error { color: var(--error-color); margin-top: 20px; text-shadow: 0 0 5px var(--error-color); }
-        .victory-title { color: var(--success-color); font-size: 2.5em; text-shadow: 0 0 20px var(--success-color); }
-
-        /* --- 3D MAP STYLES --- */
-        .map-wrapper { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; background: #020202; overflow: hidden; cursor: grab; }
-        .map-wrapper:active { cursor: grabbing; }
-        
-        .map-plane {
-            position: absolute; width: 3000px; height: 3000px;
-            transform: rotateX(60deg) rotateZ(-45deg); 
-            transform-style: preserve-3d;
-            background-image: linear-gradient(#111 2px, transparent 2px), linear-gradient(90deg, #111 2px, transparent 2px);
-            background-size: 100px 100px;
+        /* The road container - centered and dynamic height */
+        .saga-road {
+            width: 100%;
+            max-width: 600px; /* Keeps the game track contained */
+            height: <%= (totalSteps * 200) + 600 %>px; 
+            margin: 0 auto;
+            position: relative;
         }
 
-        .map-node {
-            position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 3px solid #333;
-            background: #0a0a0a; color: #555; display: flex; align-items: center; justify-content: center;
-            font-size: 1.5em; font-weight: bold; text-decoration: none; z-index: 10;
-            transform: rotateZ(45deg) rotateX(-60deg);
+        /* --- NODES --- */
+        .node-container {
+            position: absolute; width: 80px; height: 80px;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 20;
         }
-        .node-completed { border-color: var(--success-color); color: var(--success-color); background: rgba(51, 255, 51, 0.1); }
-        .node-current { border-color: var(--primary-glow); color: var(--primary-glow); background: rgba(0, 255, 204, 0.2); box-shadow: 0 0 30px rgba(0, 255, 204, 0.6); z-index: 20; }
-        .node-locked { opacity: 0.4; cursor: not-allowed; }
 
-        /* Path Line SVG */
-        #pathLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
-        .path-line { fill: none; stroke: rgba(0, 255, 204, 0.3); stroke-width: 5; stroke-dasharray: 12; animation: dash 20s linear infinite; stroke-linecap: round; }
-        @keyframes dash { to { stroke-dashoffset: -1000; } }
+        .level-node {
+            width: 65px; height: 65px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4em; font-weight: bold; text-decoration: none;
+            box-shadow: inset -4px -4px 10px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.5);
+            transition: 0.3s; border: 2px solid rgba(255,255,255,0.1);
+        }
 
-        /* Avatar & Wobble */
-        .player-avatar {
+        .node-completed { background: radial-gradient(circle at 30% 30%, #a2ffaf, #33ff33); color: #004d00; }
+        .node-current { 
+            background: radial-gradient(circle at 30% 30%, #fff, var(--primary-glow)); 
+            color: #000; box-shadow: 0 0 30px var(--primary-glow);
+            transform: scale(1.15); animation: pulse 2s infinite; z-index: 30;
+        }
+        .node-locked { background: radial-gradient(circle at 30% 30%, #555, #222); color: #444; cursor: not-allowed; }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1.15); box-shadow: 0 0 20px var(--primary-glow); }
+            50% { transform: scale(1.25); box-shadow: 0 0 40px var(--primary-glow); }
+        }
+
+        /* --- SVG PATH --- */
+        #svgLayer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+        }
+        .road-path {
+            fill: none; stroke: rgba(0, 255, 204, 0.2); stroke-width: 15;
+            stroke-linecap: round; stroke-dasharray: 20; animation: flow 20s linear infinite;
+        }
+        @keyframes flow { to { stroke-dashoffset: -1000; } }
+
+        /* --- AVATAR --- */
+        .avatar {
             position: absolute; font-size: 3.5em; z-index: 100;
-            transform: rotateZ(45deg) rotateX(-60deg) translateY(-35px);
-            transition: top 1.5s cubic-bezier(0.4, 0, 0.2, 1), left 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
+            transition: all 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            margin-top: -45px; pointer-events: none;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.8));
         }
-        .walking-anim { animation: walkWobble 0.2s infinite alternate; }
-        @keyframes walkWobble { from { transform: rotateZ(45deg) rotateX(-60deg) translateY(-35px) rotate(8deg); } to { transform: rotateZ(45deg) rotateX(-60deg) translateY(-35px) rotate(-8deg); } }
 
-        /* Sarcastic Hint System */
-        .ask-hint-btn { background: none; border: none; color: #555; text-decoration: underline; cursor: pointer; font-family: 'Share Tech Mono', monospace; margin-top: 25px; font-size: 0.9em; }
-        .system-warning { display: none; margin-top: 25px; border: 1px solid var(--error-color); background: rgba(255, 51, 102, 0.05); padding: 20px; color: var(--error-color); }
-        .warn-btn { background: transparent; font-family: 'Share Tech Mono', monospace; cursor: pointer; padding: 8px 15px; margin: 0 5px; border: 1px solid #555; color: #aaa; }
-        .btn-yes { border-color: var(--error-color); color: var(--error-color); }
-        .revealed-hint { display: none; color: var(--hint-color); margin-top: 25px; border: 1px dashed var(--hint-color); padding: 15px; }
+        /* --- UI OVERLAYS --- */
+        .header {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 500;
+            background: rgba(0,0,0,0.85); padding: 20px; text-align: center;
+            border-bottom: 2px solid var(--primary-glow);
+        }
+        .header h1 { margin: 0; letter-spacing: 5px; color: var(--primary-glow); font-size: 1.5em; }
 
-        .map-ui-overlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,10,0.9); padding: 15px 30px; border: 1px solid var(--primary-glow); border-radius: 8px; z-index: 200; text-align: center; }
+        .game-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 1000; display: flex;
+            justify-content: center; align-items: center; text-align: center;
+        }
+        .terminal-box {
+            background: #111; padding: 40px; border: 1px solid var(--primary-glow);
+            width: 90%; max-width: 500px; box-shadow: 0 0 40px rgba(0,255,204,0.1);
+        }
+        .btn { background: var(--primary-glow); color: black; border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <% if (locals.mapScreen) { %>
-        <div class="map-ui-overlay">
-            <h1>Sequence Map</h1>
-            <% if (locals.passedHint) { %> <div class="hint-box" style="margin:0;">DECODED: <%= passedHint %></div> <% } %>
-        </div>
+        <div class="header"><h1>SEQUENCE MAP</h1></div>
 
-        <div class="map-wrapper" id="mapWrapper">
-            <div class="map-plane" id="mapPlane">
-                <div class="player-avatar" id="avatar">🕵️‍♂️</div>
+        <div class="map-viewport" id="viewport">
+            <div class="saga-road" id="roadContainer">
                 
+                <svg id="svgLayer"><path id="mainPath" class="road-path" d="" /></svg>
+                <div class="avatar" id="avatar">🕵️‍♂️</div>
+
                 <% 
+                    // Start from the bottom for a saga feel
+                    let mapHeight = (totalSteps * 200) + 400;
                     for(let i = 1; i <= totalSteps; i++) { 
-                        let row = Math.floor((i - 1) / 3);
-                        let col = (i - 1) % 3;
-                        if (row % 2 !== 0) col = 2 - col; 
-                        let leftPos = (col * 220) + 1200; 
-                        let topPos = (row * 220) + 1200;
+                        let yPos = mapHeight - (i * 200);
+                        // Zig-zag math
+                        let xOffset = Math.sin(i * 1.2) * 150; 
+                        let xPos = 50 + (xOffset / 6); // Percentage inside the 600px container
                 %>
-                    <% if (i < currentStep) { %>
-                        <div class="map-node node-completed" style="left: <%= leftPos %>px; top: <%= topPos %>px;" id="node-<%= i %>">✓</div>
-                    <% } else if (i === currentStep) { %>
-                        <a href="/play/<%= i %>?hint=<%= locals.passedHint || '' %>" class="map-node node-current" style="left: <%= leftPos %>px; top: <%= topPos %>px;" id="node-<%= i %>"><%= i %></a>
-                    <% } else { %>
-                        <div class="map-node node-locked" style="left: <%= leftPos %>px; top: <%= topPos %>px;" id="node-<%= i %>">🔒</div>
-                    <% } %>
+                    <div class="node-container" style="left: <%= xPos %>%; top: <%= yPos %>px;">
+                        <% if (i < currentStep) { %>
+                            <div class="level-node node-completed" id="node-<%= i %>">✓</div>
+                        <% } else if (i === currentStep) { %>
+                            <a href="/play/<%= i %>?hint=<%= locals.passedHint || '' %>" class="level-node node-current" id="node-<%= i %>"><%= i %></a>
+                        <% } else { %>
+                            <div class="level-node node-locked" id="node-<%= i %>">🔒</div>
+                        <% } %>
+                    </div>
                 <% } %>
             </div>
         </div>
@@ -140,99 +141,68 @@
         <script>
             window.onload = () => {
                 const avatar = document.getElementById('avatar');
-                const nodes = document.querySelectorAll('.map-node');
-                const plane = document.getElementById('mapPlane');
-                const wrapper = document.getElementById('mapWrapper');
+                const viewport = document.getElementById('viewport');
+                const road = document.getElementById('mainPath');
+                const nodes = [];
 
-                // Draw Path Lines
-                let svgHtml = `<svg id="pathLayer" viewBox="0 0 3000 3000">`;
-                for (let i = 1; i < nodes.length; i++) {
-                    const n1 = nodes[i-1]; const n2 = nodes[i];
-                    const x1 = parseInt(n1.style.left) + 30; const y1 = parseInt(n1.style.top) + 30;
-                    const x2 = parseInt(n2.style.left) + 30; const y2 = parseInt(n2.style.top) + 30;
-                    svgHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="path-line" />`;
-                }
-                svgHtml += `</svg>`;
-                plane.insertAdjacentHTML('afterbegin', svgHtml);
+                // 1. Get nodes and draw SVG path
+                <% for(let i = 1; i <= totalSteps; i++) { %>
+                    nodes.push(document.getElementById('node-<%= i %>'));
+                <% } %>
 
-                // Walking logic
-                const prev = document.getElementById('node-<%= locals.previousStep %>');
+                let d = "";
+                nodes.forEach((node, idx) => {
+                    const x = node.parentElement.offsetLeft + 40;
+                    const y = node.parentElement.offsetTop + 40;
+                    d += (idx === 0 ? "M" : "L") + ` ${x} ${y}`;
+                });
+                road.setAttribute("d", d);
+
+                // 2. Avatar Walking & Camera Centering
+                const prev = document.getElementById('node-<%= locals.previousStep || 1 %>');
                 const curr = document.getElementById('node-<%= locals.currentStep %>');
 
-                if (prev && curr && "<%= locals.previousStep %>" !== "<%= locals.currentStep %>") {
-                    avatar.style.left = prev.style.left;
-                    avatar.style.top = prev.style.top;
+                if (prev && curr) {
+                    // Set to old spot first
+                    avatar.style.left = prev.parentElement.style.left;
+                    avatar.style.top = prev.parentElement.style.top;
+                    
+                    // Walk to new spot
                     setTimeout(() => {
-                        avatar.classList.add('walking-anim');
-                        avatar.style.left = curr.style.left;
-                        avatar.style.top = curr.style.top;
-                        setTimeout(() => avatar.classList.remove('walking-anim'), 1500);
-                    }, 600);
-                } else if (curr) {
-                    avatar.style.left = curr.style.left;
-                    avatar.style.top = curr.style.top;
+                        avatar.style.left = curr.parentElement.style.left;
+                        avatar.style.top = curr.parentElement.style.top;
+                        // Center screen on player
+                        viewport.scrollTop = curr.parentElement.offsetTop - (window.innerHeight / 2);
+                    }, 500);
+                } else {
+                    viewport.scrollTop = roadContainer.offsetHeight; // Start at bottom
                 }
-
-                // Initial Scroll Position
-                wrapper.scrollLeft = 1150; wrapper.scrollTop = 1150;
             };
-
-            // Drag Logic
-            const slider = document.getElementById('mapWrapper');
-            let isDown = false; let startX, startY, sL, sT;
-            slider.addEventListener('mousedown', (e) => {
-                isDown = true; startX = e.pageX - slider.offsetLeft; startY = e.pageY - slider.offsetTop;
-                sL = slider.scrollLeft; sT = slider.scrollTop;
-            });
-            slider.addEventListener('mouseup', () => isDown = false);
-            slider.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                const x = e.pageX - slider.offsetLeft; const y = e.pageY - slider.offsetTop;
-                slider.scrollLeft = sL - (x - startX) * 1.5; slider.scrollTop = sT - (y - startY) * 1.5;
-            });
         </script>
 
     <% } else { %>
-        <div class="game-container <%= locals.victory ? 'victory-container' : '' %>">
-            
-            <% if (locals.startScreen) { %>
-                <h1>The Enigma Project</h1>
-                <p>Welcome, Operative. Decipher the linked sequence.</p>
-                <form action="/map" method="GET"><input type="hidden" name="step" value="1"><button class="submit-btn" type="submit">INITIALIZE</button></form>
-
-            <% } else if (locals.victory) { %>
-                <h1 class="victory-title">ACCESS GRANTED</h1>
-                <p>System override complete.</p>
-                <form action="/" method="GET"><button class="submit-btn" style="color:var(--success-color); border-color:var(--success-color);" type="submit">REBOOT</button></form>
-            
-            <% } else { %>
-                <h1>Level <%= riddle.stepNumber %></h1>
-                <% if (locals.passedHint) { %> <div class="hint-box">CLUE: <%= passedHint %></div> <% } %>
-                <div class="riddle-text">"<%= riddle.question %>"</div>
-
-                <form action="/verify" method="POST">
-                    <input type="hidden" name="stepNumber" value="<%= riddle.stepNumber %>">
-                    <input type="hidden" name="passedHint" value="<%= locals.passedHint || '' %>">
-                    <input type="text" name="userAnswer" placeholder="SOLUTION..." required autocomplete="off" autofocus>
-                    <br><button class="submit-btn" type="submit">SUBMIT</button>
-                </form>
-
-                <% if (locals.error) { %> <p class="error"><%= error %></p> <% } %>
-
-                <button type="button" id="askBtn" class="ask-hint-btn" onclick="showWarn()">[ Request Assistance ]</button>
-                <div id="warn" class="system-warning">
-                    <p>> Cognitive capacity deemed insufficient. Admit defeat?</p>
-                    <button type="button" class="warn-btn" onclick="hideWarn()">ABORT</button>
-                    <button type="button" class="warn-btn btn-yes" onclick="showHint()">YES</button>
-                </div>
-                <div id="hDisplay" class="revealed-hint">> HINT: <%= riddle.hint %></div>
-
-                <script>
-                    function showWarn() { document.getElementById('askBtn').style.display='none'; document.getElementById('warn').style.display='block'; }
-                    function hideWarn() { document.getElementById('warn').style.display='none'; document.getElementById('askBtn').style.display='inline-block'; }
-                    function showHint() { document.getElementById('warn').style.display='none'; document.getElementById('hDisplay').style.display='block'; }
-                </script>
-            <% } %>
+        <div class="game-overlay">
+            <div class="terminal-box">
+                <% if (locals.startScreen) { %>
+                    <h1>ENIGMA PROJECT</h1>
+                    <p>Winding through the sequences... begin your descent.</p>
+                    <form action="/map" method="GET"><button class="btn" type="submit">Initialize Saga</button></form>
+                <% } else if (locals.victory) { %>
+                    <h1 style="color:var(--success-color)">ACCESS GRANTED</h1>
+                    <p>All 1000 protocols resolved.</p>
+                    <form action="/" method="GET"><button class="btn" type="submit">Reboot</button></form>
+                <% } else { %>
+                    <h2 style="color:var(--primary-glow)">Level <%= riddle.stepNumber %></h2>
+                    <p style="font-size:1.2em; margin:25px 0;">"<%= riddle.question %>"</p>
+                    <form action="/verify" method="POST">
+                        <input type="hidden" name="stepNumber" value="<%= riddle.stepNumber %>">
+                        <input type="text" name="userAnswer" placeholder="DECRYPT..." required autofocus 
+                               style="width:80%; padding:15px; background:black; color:white; border:1px solid #333; text-align:center;">
+                        <br><br><button class="btn" type="submit">Verify</button>
+                    </form>
+                    <% if (locals.error) { %> <p style="color:red"><%= error %></p> <% } %>
+                <% } %>
+            </div>
         </div>
     <% } %>
 
