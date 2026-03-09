@@ -12,6 +12,8 @@
             --primary-glow: #00ffcc;
             --success-color: #33ff33;
             --node-locked: #222;
+            --hint-color: #ffcc00;
+            --error-color: #ff3366;
         }
 
         body, html { 
@@ -21,88 +23,46 @@
         }
 
         /* --- SAGA VIEWPORT --- */
-        .map-viewport {
-            width: 100vw; height: 100vh;
-            overflow-y: auto; overflow-x: hidden;
-            position: relative;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #05050a 100%);
-            scroll-behavior: smooth;
-        }
-
-        /* The road container - centered and dynamic height */
-        .saga-road {
-            width: 100%;
-            max-width: 600px; /* Keeps the game track contained */
-            height: <%= (totalSteps * 200) + 600 %>px; 
-            margin: 0 auto;
-            position: relative;
-        }
+        .map-viewport { width: 100vw; height: 100vh; overflow-y: auto; overflow-x: hidden; position: relative; background: radial-gradient(circle at center, #1a1a2e 0%, #05050a 100%); scroll-behavior: smooth; }
+        .saga-road { width: 100%; max-width: 600px; height: <%= (locals.totalSteps * 200) + 600 %>px; margin: 0 auto; position: relative; }
 
         /* --- NODES --- */
-        .node-container {
-            position: absolute; width: 80px; height: 80px;
-            display: flex; justify-content: center; align-items: center;
-            z-index: 20;
-        }
-
-        .level-node {
-            width: 65px; height: 65px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.4em; font-weight: bold; text-decoration: none;
-            box-shadow: inset -4px -4px 10px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.5);
-            transition: 0.3s; border: 2px solid rgba(255,255,255,0.1);
-        }
-
+        .node-container { position: absolute; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; z-index: 20; }
+        .level-node { width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4em; font-weight: bold; text-decoration: none; box-shadow: inset -4px -4px 10px rgba(0,0,0,0.6), 0 10px 20px rgba(0,0,0,0.5); transition: 0.3s; border: 2px solid rgba(255,255,255,0.1); }
         .node-completed { background: radial-gradient(circle at 30% 30%, #a2ffaf, #33ff33); color: #004d00; }
-        .node-current { 
-            background: radial-gradient(circle at 30% 30%, #fff, var(--primary-glow)); 
-            color: #000; box-shadow: 0 0 30px var(--primary-glow);
-            transform: scale(1.15); animation: pulse 2s infinite; z-index: 30;
-        }
+        .node-current { background: radial-gradient(circle at 30% 30%, #fff, var(--primary-glow)); color: #000; box-shadow: 0 0 30px var(--primary-glow); transform: scale(1.15); animation: pulse 2s infinite; z-index: 30; }
         .node-locked { background: radial-gradient(circle at 30% 30%, #555, #222); color: #444; cursor: not-allowed; }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1.15); box-shadow: 0 0 20px var(--primary-glow); }
-            50% { transform: scale(1.25); box-shadow: 0 0 40px var(--primary-glow); }
-        }
+        @keyframes pulse { 0%, 100% { transform: scale(1.15); box-shadow: 0 0 20px var(--primary-glow); } 50% { transform: scale(1.25); box-shadow: 0 0 40px var(--primary-glow); } }
 
         /* --- SVG PATH --- */
-        #svgLayer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10;
-        }
-        .road-path {
-            fill: none; stroke: rgba(0, 255, 204, 0.2); stroke-width: 15;
-            stroke-linecap: round; stroke-dasharray: 20; animation: flow 20s linear infinite;
-        }
+        #svgLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .road-path { fill: none; stroke: rgba(0, 255, 204, 0.2); stroke-width: 15; stroke-linecap: round; stroke-dasharray: 20; animation: flow 20s linear infinite; }
         @keyframes flow { to { stroke-dashoffset: -1000; } }
 
         /* --- AVATAR --- */
-        .avatar {
-            position: absolute; font-size: 3.5em; z-index: 100;
-            transition: all 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            margin-top: -45px; pointer-events: none;
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.8));
-        }
+        .avatar { position: absolute; font-size: 3.5em; z-index: 100; transition: all 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55); margin-top: -45px; pointer-events: none; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.8)); }
 
         /* --- UI OVERLAYS --- */
-        .header {
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 500;
-            background: rgba(0,0,0,0.85); padding: 20px; text-align: center;
-            border-bottom: 2px solid var(--primary-glow);
-        }
+        .header { position: fixed; top: 0; left: 0; width: 100%; z-index: 500; background: rgba(0,0,0,0.85); padding: 20px; text-align: center; border-bottom: 2px solid var(--primary-glow); }
         .header h1 { margin: 0; letter-spacing: 5px; color: var(--primary-glow); font-size: 1.5em; }
+        .game-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; justify-content: center; align-items: center; text-align: center; }
+        .terminal-box { background: #111; padding: 40px; border: 1px solid var(--primary-glow); width: 90%; max-width: 500px; box-shadow: 0 0 40px rgba(0,255,204,0.1); }
+        .btn { background: var(--primary-glow); color: black; border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn:hover { background: #fff; box-shadow: 0 0 20px var(--primary-glow); }
 
-        .game-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 1000; display: flex;
-            justify-content: center; align-items: center; text-align: center;
-        }
-        .terminal-box {
-            background: #111; padding: 40px; border: 1px solid var(--primary-glow);
-            width: 90%; max-width: 500px; box-shadow: 0 0 40px rgba(0,255,204,0.1);
-        }
-        .btn { background: var(--primary-glow); color: black; border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        /* --- HINT SYSTEM ANIMATIONS & STYLES --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .ask-hint-btn { background: none; border: none; color: #555; text-decoration: underline; cursor: pointer; font-family: 'Share Tech Mono', monospace; margin-top: 25px; font-size: 0.9em; transition: 0.3s; }
+        .ask-hint-btn:hover { color: var(--error-color); }
+        .system-warning { display: none; margin-top: 25px; border: 1px solid var(--error-color); background: rgba(255, 51, 102, 0.05); padding: 20px; color: var(--error-color); animation: fadeIn 0.3s ease-out; }
+        .system-warning p { margin: 0 0 15px 0; font-size: 0.95em; line-height: 1.4; }
+        .warn-btn { background: transparent; font-family: 'Share Tech Mono', monospace; cursor: pointer; padding: 8px 15px; margin: 0 5px; font-size: 0.9em; transition: 0.2s; }
+        .btn-yes { border: 1px solid var(--error-color); color: var(--error-color); }
+        .btn-yes:hover { background: var(--error-color); color: #000; }
+        .btn-no { border: 1px solid #555; color: #aaa; }
+        .btn-no:hover { border-color: var(--primary-glow); color: var(--primary-glow); }
+        .revealed-hint { display: none; color: var(--hint-color); margin-top: 25px; font-size: 1em; border: 1px dashed var(--hint-color); padding: 15px; background: rgba(255, 204, 0, 0.05); text-shadow: 0 0 5px rgba(255, 204, 0, 0.3); animation: fadeIn 0.5s ease-out; }
     </style>
 </head>
 <body>
@@ -112,18 +72,15 @@
 
         <div class="map-viewport" id="viewport">
             <div class="saga-road" id="roadContainer">
-                
                 <svg id="svgLayer"><path id="mainPath" class="road-path" d="" /></svg>
                 <div class="avatar" id="avatar">🕵️‍♂️</div>
 
                 <% 
-                    // Start from the bottom for a saga feel
-                    let mapHeight = (totalSteps * 200) + 400;
-                    for(let i = 1; i <= totalSteps; i++) { 
+                    let mapHeight = (locals.totalSteps * 200) + 400;
+                    for(let i = 1; i <= locals.totalSteps; i++) { 
                         let yPos = mapHeight - (i * 200);
-                        // Zig-zag math
                         let xOffset = Math.sin(i * 1.2) * 150; 
-                        let xPos = 50 + (xOffset / 6); // Percentage inside the 600px container
+                        let xPos = 50 + (xOffset / 6); 
                 %>
                     <div class="node-container" style="left: <%= xPos %>%; top: <%= yPos %>px;">
                         <% if (i < currentStep) { %>
@@ -145,8 +102,7 @@
                 const road = document.getElementById('mainPath');
                 const nodes = [];
 
-                // 1. Get nodes and draw SVG path
-                <% for(let i = 1; i <= totalSteps; i++) { %>
+                <% for(let i = 1; i <= locals.totalSteps; i++) { %>
                     nodes.push(document.getElementById('node-<%= i %>'));
                 <% } %>
 
@@ -158,24 +114,19 @@
                 });
                 road.setAttribute("d", d);
 
-                // 2. Avatar Walking & Camera Centering
                 const prev = document.getElementById('node-<%= locals.previousStep || 1 %>');
                 const curr = document.getElementById('node-<%= locals.currentStep %>');
 
                 if (prev && curr) {
-                    // Set to old spot first
                     avatar.style.left = prev.parentElement.style.left;
                     avatar.style.top = prev.parentElement.style.top;
-                    
-                    // Walk to new spot
                     setTimeout(() => {
                         avatar.style.left = curr.parentElement.style.left;
                         avatar.style.top = curr.parentElement.style.top;
-                        // Center screen on player
                         viewport.scrollTop = curr.parentElement.offsetTop - (window.innerHeight / 2);
                     }, 500);
                 } else {
-                    viewport.scrollTop = roadContainer.offsetHeight; // Start at bottom
+                    viewport.scrollTop = roadContainer.offsetHeight;
                 }
             };
         </script>
@@ -187,20 +138,51 @@
                     <h1>ENIGMA PROJECT</h1>
                     <p>Winding through the sequences... begin your descent.</p>
                     <form action="/map" method="GET"><button class="btn" type="submit">Initialize Saga</button></form>
+                
                 <% } else if (locals.victory) { %>
                     <h1 style="color:var(--success-color)">ACCESS GRANTED</h1>
-                    <p>All 1000 protocols resolved.</p>
+                    <p>All protocols resolved.</p>
                     <form action="/" method="GET"><button class="btn" type="submit">Reboot</button></form>
+                
                 <% } else { %>
                     <h2 style="color:var(--primary-glow)">Level <%= riddle.stepNumber %></h2>
                     <p style="font-size:1.2em; margin:25px 0;">"<%= riddle.question %>"</p>
+                    
                     <form action="/verify" method="POST">
                         <input type="hidden" name="stepNumber" value="<%= riddle.stepNumber %>">
-                        <input type="text" name="userAnswer" placeholder="DECRYPT..." required autofocus 
-                               style="width:80%; padding:15px; background:black; color:white; border:1px solid #333; text-align:center;">
+                        <input type="text" name="userAnswer" placeholder="DECRYPT..." required autofocus style="width:80%; padding:15px; background:black; color:white; border:1px solid #333; text-align:center;">
                         <br><br><button class="btn" type="submit">Verify</button>
                     </form>
-                    <% if (locals.error) { %> <p style="color:red"><%= error %></p> <% } %>
+                    
+                    <% if (locals.error) { %> <p style="color:red; margin-top: 15px;"><%= error %></p> <% } %>
+
+                    <button type="button" id="askHintBtn" class="ask-hint-btn" onclick="triggerWarning()">[ Request Assistance ]</button>
+                    
+                    <div id="systemWarningBox" class="system-warning">
+                        <p>> SYSTEM WARNING: Cognitive capacity deemed insufficient.</p>
+                        <p>> Are you seriously giving up already?</p>
+                        <button type="button" class="warn-btn btn-no" onclick="cancelHint()">ABORT</button>
+                        <button type="button" class="warn-btn btn-yes" onclick="revealHint()">ADMIT DEFEAT</button>
+                    </div>
+
+                    <div id="hintDisplay" class="revealed-hint">
+                        > DECRYPTED HINT: <%= riddle.hint %>
+                    </div>
+
+                    <script>
+                        function triggerWarning() {
+                            document.getElementById('askHintBtn').style.display = 'none';
+                            document.getElementById('systemWarningBox').style.display = 'block';
+                        }
+                        function cancelHint() {
+                            document.getElementById('systemWarningBox').style.display = 'none';
+                            document.getElementById('askHintBtn').style.display = 'inline-block';
+                        }
+                        function revealHint() {
+                            document.getElementById('systemWarningBox').style.display = 'none';
+                            document.getElementById('hintDisplay').style.display = 'block';
+                        }
+                    </script>
                 <% } %>
             </div>
         </div>

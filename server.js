@@ -22,18 +22,14 @@ mongoose.connect(process.env.MONGO_URI)
     .catch((err) => console.log('Database connection error: ', err));
 */
 
-// Basic Test Route
-// --- DUMMY DATA (No extra hint field needed!) ---
-// --- THE RIDDLE CHAIN ---
-// Notice how the answer to each question is the direct subject of the next question!
-// --- THE RIDDLE CHAIN ---
 // --- THE ENIGMA MIXED CHAIN ---
 const riddles = [
     // --- INDIAN MYTHOLOGY ---
     { 
         stepNumber: 1, 
         question: "He is the elephant-headed Lord of Beginnings, the remover of obstacles. Who is he?", 
-        answer: "ganesha" || "ganesh" || "vinayaka" || "vinayakudu",
+        // FIX: Use an array to allow multiple acceptable answers
+        answer: ["ganesha", "ganesh", "vinayaka", "vinayakudu"],
         hint: "Son of Shiva and Parvati."
     },
     { 
@@ -100,8 +96,9 @@ const riddles = [
     }
 ];
 
-// --- THE RIDDLE CHAIN ---
+// Set global variable for EJS templates
 app.locals.totalSteps = riddles.length;
+
 // --- ROUTES ---
 
 // 1. The Home / Landing Page
@@ -109,11 +106,9 @@ app.get('/', (req, res) => {
     res.render('index', { startScreen: true }); 
 });
 
-// 2. The New Map Screen Route
-// 2. The New Map Screen Route
+// 2. The Saga Map Screen Route
 app.get('/map', (req, res) => {
     const step = parseInt(req.query.step) || 1;
-    // We grab the previous step so we know where to start the walking animation
     const prevStep = parseInt(req.query.prev) || step; 
     const hint = req.query.hint || null;
 
@@ -124,30 +119,9 @@ app.get('/map', (req, res) => {
     res.render('index', { 
         mapScreen: true, 
         currentStep: step, 
-        previousStep: prevStep, // Pass this to the frontend!
-        totalSteps: riddles.length,
+        previousStep: prevStep, 
         passedHint: hint
     });
-});
-
-// ... Keep your app.get('/play/:step') route the same ...
-
-// 4. The Verify Route
-app.post('/verify', (req, res) => {
-    const userStep = parseInt(req.body.stepNumber);
-    const userAnswer = req.body.userAnswer.trim().toLowerCase();
-    const passedHint = req.body.passedHint;
-    
-    const currentRiddle = riddles.find(r => r.stepNumber === userStep);
-
-    if (userAnswer === currentRiddle.answer) {
-        const nextStep = userStep + 1;
-        const newHintText = currentRiddle.answer.toUpperCase();
-        // Pass the userStep as the 'prev' variable so the map knows where they came from
-        res.redirect(`/map?step=${nextStep}&hint=${newHintText}&prev=${userStep}`);
-    } else {
-        res.render('index', { riddle: currentRiddle, error: "ACCESS DENIED.", passedHint: passedHint });
-    }
 });
 
 // 3. The Route to load a specific question
@@ -157,12 +131,11 @@ app.get('/play/:step', (req, res) => {
     
     res.render('index', { 
         riddle: riddle, 
-        passedHint: req.query.hint // Bring the hint into the question screen
+        passedHint: req.query.hint 
     }); 
 });
 
-// 4. The Verify Route
-// 4. The Verify Route
+// 4. The Verify Route (Cleaned up!)
 app.post('/verify', (req, res) => {
     const userStep = parseInt(req.body.stepNumber);
     const userAnswer = req.body.userAnswer.trim().toLowerCase();
@@ -170,15 +143,27 @@ app.post('/verify', (req, res) => {
     
     const currentRiddle = riddles.find(r => r.stepNumber === userStep);
 
-    if (userAnswer === currentRiddle.answer) {
+    // FIX: Check if the answer is an Array (like Ganesha) or a single String
+    let isCorrect = false;
+    let actualAnswer = "";
+
+    if (Array.isArray(currentRiddle.answer)) {
+        isCorrect = currentRiddle.answer.includes(userAnswer);
+        actualAnswer = currentRiddle.answer[0]; // Grab the first one to use as the hint
+    } else {
+        isCorrect = (userAnswer === currentRiddle.answer);
+        actualAnswer = currentRiddle.answer;
+    }
+
+    if (isCorrect) {
         const nextStep = userStep + 1;
-        const newHintText = currentRiddle.answer.toUpperCase();
-        // Pass the userStep as the 'prev' variable so the map knows where they came from
+        const newHintText = actualAnswer.toUpperCase();
         res.redirect(`/map?step=${nextStep}&hint=${newHintText}&prev=${userStep}`);
     } else {
         res.render('index', { riddle: currentRiddle, error: "ACCESS DENIED.", passedHint: passedHint });
     }
 });
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
