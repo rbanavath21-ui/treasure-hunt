@@ -16,128 +16,225 @@
             --success-color: #33ff33;
             --hint-color: #ffcc00; 
         }
-        body { font-family: 'Share Tech Mono', monospace; background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .game-container { background-color: var(--panel-bg); width: 90%; max-width: 600px; padding: 50px; border-radius: 4px; border: 1px solid #333; box-shadow: 0 0 20px rgba(0, 255, 204, 0.05); text-align: center; animation: fadeIn 0.8s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        h1 { color: var(--primary-glow); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 30px; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
-        .level-indicator { font-size: 0.9em; color: #666; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;}
-        .hint-box { background: rgba(0, 255, 204, 0.1); border-left: 4px solid var(--primary-glow); padding: 15px; margin-bottom: 25px; color: var(--primary-glow); font-size: 1.1em; text-transform: uppercase;}
-        .riddle-text { font-size: 1.4em; line-height: 1.6; margin-bottom: 40px; color: #fff; }
-        input[type="text"] { width: 80%; padding: 15px; margin-bottom: 20px; background: #000; border: 1px solid #444; color: var(--primary-glow); font-family: 'Share Tech Mono', monospace; font-size: 1.2em; text-align: center; transition: 0.3s; outline: none; }
-        input[type="text"]:focus { border-color: var(--primary-glow); box-shadow: 0 0 15px rgba(0, 255, 204, 0.4); }
-        button.submit-btn { background-color: transparent; color: var(--primary-glow); padding: 12px 40px; border: 1px solid var(--primary-glow); font-family: 'Share Tech Mono', monospace; font-size: 1.2em; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
-        button.submit-btn:hover { background-color: var(--primary-glow); color: #000; box-shadow: 0 0 20px var(--primary-glow); }
-        .error { color: var(--error-color); margin-top: 20px; text-shadow: 0 0 5px var(--error-color); }
-        .victory-container { border: 1px solid var(--success-color); box-shadow: 0 0 30px rgba(51, 255, 51, 0.2); padding: 40px; }
-        .victory-title { color: var(--success-color); font-size: 2.5em; text-shadow: 0 0 20px var(--success-color); animation: pulse 1.5s infinite alternate; }
-        .victory-text { font-size: 1.2em; color: #ccc; margin-bottom: 30px; line-height: 1.5; }
-        @keyframes pulse { from { text-shadow: 0 0 10px var(--success-color); } to { text-shadow: 0 0 30px var(--success-color), 0 0 10px #fff; } }
-        
-        /* --- CUSTOM HINT SYSTEM STYLES --- */
-        .ask-hint-btn { background: none; border: none; color: #555; text-decoration: underline; cursor: pointer; font-family: 'Share Tech Mono', monospace; margin-top: 25px; font-size: 0.9em; transition: 0.3s; }
-        .ask-hint-btn:hover { color: var(--error-color); }
-        
-        /* The custom sarcastic warning box */
-        .system-warning { display: none; margin-top: 25px; border: 1px solid var(--error-color); background: rgba(255, 51, 102, 0.05); padding: 20px; color: var(--error-color); animation: fadeIn 0.3s ease-in-out; }
-        .system-warning p { margin: 0 0 15px 0; font-size: 0.95em; line-height: 1.4; }
-        
-        /* Warning buttons */
-        .warn-btn { background: transparent; font-family: 'Share Tech Mono', monospace; cursor: pointer; padding: 8px 15px; margin: 0 5px; font-size: 0.9em; transition: 0.2s; }
-        .btn-yes { border: 1px solid var(--error-color); color: var(--error-color); }
-        .btn-yes:hover { background: var(--error-color); color: #000; }
-        .btn-no { border: 1px solid #555; color: #aaa; }
-        .btn-no:hover { border-color: var(--primary-glow); color: var(--primary-glow); }
 
-        /* The actual hint display */
-        .revealed-hint { display: none; color: var(--hint-color); margin-top: 25px; font-size: 1em; border: 1px dashed var(--hint-color); padding: 15px; background: rgba(255, 204, 0, 0.05); text-shadow: 0 0 5px rgba(255, 204, 0, 0.3); animation: fadeIn 0.5s ease-in-out; }
+        body { 
+            font-family: 'Share Tech Mono', monospace; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            overflow: hidden; 
+        }
+
+        /* --- UI OVERLAY & CONTAINERS --- */
+        .game-container { 
+            background-color: var(--panel-bg); 
+            width: 90%; 
+            max-width: 600px; 
+            padding: 50px; 
+            border-radius: 4px; 
+            border: 1px solid #333; 
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.05); 
+            text-align: center; 
+            animation: fadeIn 0.8s ease-in-out; 
+            position: relative; 
+            z-index: 100; 
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { color: var(--primary-glow); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0, 255, 204, 0.3); }
+        .hint-box { background: rgba(0, 255, 204, 0.1); border-left: 4px solid var(--primary-glow); padding: 15px; margin-bottom: 25px; color: var(--primary-glow); font-size: 1.1em; text-transform: uppercase; }
+        .riddle-text { font-size: 1.4em; line-height: 1.6; margin-bottom: 40px; color: #fff; }
+        
+        input[type="text"] { width: 80%; padding: 15px; margin-bottom: 20px; background: #000; border: 1px solid #444; color: var(--primary-glow); font-family: 'Share Tech Mono', monospace; font-size: 1.2em; text-align: center; outline: none; transition: 0.3s; }
+        input[type="text"]:focus { border-color: var(--primary-glow); box-shadow: 0 0 15px rgba(0, 255, 204, 0.4); }
+        
+        button.submit-btn { background-color: var(--bg-color); color: var(--primary-glow); padding: 12px 40px; border: 1px solid var(--primary-glow); font-family: 'Share Tech Mono', monospace; font-size: 1.2em; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        button.submit-btn:hover { background-color: var(--primary-glow); color: #000; box-shadow: 0 0 20px var(--primary-glow); }
+
+        .error { color: var(--error-color); margin-top: 20px; text-shadow: 0 0 5px var(--error-color); }
+        .victory-title { color: var(--success-color); font-size: 2.5em; text-shadow: 0 0 20px var(--success-color); }
+
+        /* --- 3D MAP STYLES --- */
+        .map-wrapper { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; background: #020202; overflow: hidden; cursor: grab; }
+        .map-wrapper:active { cursor: grabbing; }
+        
+        .map-plane {
+            position: absolute; width: 3000px; height: 3000px;
+            transform: rotateX(60deg) rotateZ(-45deg); 
+            transform-style: preserve-3d;
+            background-image: linear-gradient(#111 2px, transparent 2px), linear-gradient(90deg, #111 2px, transparent 2px);
+            background-size: 100px 100px;
+        }
+
+        .map-node {
+            position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 3px solid #333;
+            background: #0a0a0a; color: #555; display: flex; align-items: center; justify-content: center;
+            font-size: 1.5em; font-weight: bold; text-decoration: none; z-index: 10;
+            transform: rotateZ(45deg) rotateX(-60deg);
+        }
+        .node-completed { border-color: var(--success-color); color: var(--success-color); background: rgba(51, 255, 51, 0.1); }
+        .node-current { border-color: var(--primary-glow); color: var(--primary-glow); background: rgba(0, 255, 204, 0.2); box-shadow: 0 0 30px rgba(0, 255, 204, 0.6); z-index: 20; }
+        .node-locked { opacity: 0.4; cursor: not-allowed; }
+
+        /* Path Line SVG */
+        #pathLayer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+        .path-line { fill: none; stroke: rgba(0, 255, 204, 0.3); stroke-width: 5; stroke-dasharray: 12; animation: dash 20s linear infinite; stroke-linecap: round; }
+        @keyframes dash { to { stroke-dashoffset: -1000; } }
+
+        /* Avatar & Wobble */
+        .player-avatar {
+            position: absolute; font-size: 3.5em; z-index: 100;
+            transform: rotateZ(45deg) rotateX(-60deg) translateY(-35px);
+            transition: top 1.5s cubic-bezier(0.4, 0, 0.2, 1), left 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+        .walking-anim { animation: walkWobble 0.2s infinite alternate; }
+        @keyframes walkWobble { from { transform: rotateZ(45deg) rotateX(-60deg) translateY(-35px) rotate(8deg); } to { transform: rotateZ(45deg) rotateX(-60deg) translateY(-35px) rotate(-8deg); } }
+
+        /* Sarcastic Hint System */
+        .ask-hint-btn { background: none; border: none; color: #555; text-decoration: underline; cursor: pointer; font-family: 'Share Tech Mono', monospace; margin-top: 25px; font-size: 0.9em; }
+        .system-warning { display: none; margin-top: 25px; border: 1px solid var(--error-color); background: rgba(255, 51, 102, 0.05); padding: 20px; color: var(--error-color); }
+        .warn-btn { background: transparent; font-family: 'Share Tech Mono', monospace; cursor: pointer; padding: 8px 15px; margin: 0 5px; border: 1px solid #555; color: #aaa; }
+        .btn-yes { border-color: var(--error-color); color: var(--error-color); }
+        .revealed-hint { display: none; color: var(--hint-color); margin-top: 25px; border: 1px dashed var(--hint-color); padding: 15px; }
+
+        .map-ui-overlay { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(10,10,10,0.9); padding: 15px 30px; border: 1px solid var(--primary-glow); border-radius: 8px; z-index: 200; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div class="game-container <%= locals.victory ? 'victory-container' : '' %>">
-        
-        <% if (locals.startScreen) { %>
-            <h1>The Enigma Project</h1>
-            <div style="font-size: 1.2em; color: #ccc; margin-bottom: 40px; line-height: 1.8;">
-                <p>Welcome, Operative.</p>
-                <p>Your mission is to decipher the linked sequence.</p>
-                <p style="color: var(--primary-glow); border: 1px dashed var(--primary-glow); padding: 10px; margin-top: 20px;">
-                    WARNING: The solution to one protocol is the key to the next. Pay attention.
-                </p>
+    <% if (locals.mapScreen) { %>
+        <div class="map-ui-overlay">
+            <h1>Sequence Map</h1>
+            <% if (locals.passedHint) { %> <div class="hint-box" style="margin:0;">DECODED: <%= passedHint %></div> <% } %>
+        </div>
+
+        <div class="map-wrapper" id="mapWrapper">
+            <div class="map-plane" id="mapPlane">
+                <div class="player-avatar" id="avatar">🕵️‍♂️</div>
+                
+                <% 
+                    for(let i = 1; i <= totalSteps; i++) { 
+                        let row = Math.floor((i - 1) / 3);
+                        let col = (i - 1) % 3;
+                        if (row % 2 !== 0) col = 2 - col; 
+                        let leftPos = (col * 220) + 1200; 
+                        let topPos = (row * 220) + 1200;
+                %>
+                    <% if (i < currentStep) { %>
+                        <div class="map-node node-completed" style="left: <%= leftPos %>px; top: <%= topPos %>px;" id="node-<%= i %>">✓</div>
+                    <% } else if (i === currentStep) { %>
+                        <a href="/play/<%= i %>?hint=<%= locals.passedHint || '' %>" class="map-node node-current" style="left: <%= leftPos %>px; top: <%= topPos %>px;" id="node-<%= i %>"><%= i %></a>
+                    <% } else { %>
+                        <div class="map-node node-locked" style="left: <%= leftPos %>px; top: <%= topPos %>px;" id="node-<%= i %>">🔒</div>
+                    <% } %>
+                <% } %>
             </div>
-            <form action="/play" method="GET">
-                <button class="submit-btn" type="submit">INITIALIZE SEQUENCE</button>
-            </form>
+        </div>
 
-        <% } else if (locals.victory) { %>
-            <h1 class="victory-title">ACCESS GRANTED</h1>
-            <div class="victory-text">
-                <p>All sequences successfully resolved.</p>
-                <p>System override complete.</p>
-            </div>
-            <form action="/" method="GET">
-                <button class="submit-btn" style="color: var(--success-color); border-color: var(--success-color);" type="submit">REBOOT SYSTEM</button>
-            </form>
-        
-        <% } else { %>
-            <h1>The Enigma Project</h1>
+        <script>
+            window.onload = () => {
+                const avatar = document.getElementById('avatar');
+                const nodes = document.querySelectorAll('.map-node');
+                const plane = document.getElementById('mapPlane');
+                const wrapper = document.getElementById('mapWrapper');
 
-            <div class="level-indicator">Sequence // 0<%= riddle.stepNumber %></div>
+                // Draw Path Lines
+                let svgHtml = `<svg id="pathLayer" viewBox="0 0 3000 3000">`;
+                for (let i = 1; i < nodes.length; i++) {
+                    const n1 = nodes[i-1]; const n2 = nodes[i];
+                    const x1 = parseInt(n1.style.left) + 30; const y1 = parseInt(n1.style.top) + 30;
+                    const x2 = parseInt(n2.style.left) + 30; const y2 = parseInt(n2.style.top) + 30;
+                    svgHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="path-line" />`;
+                }
+                svgHtml += `</svg>`;
+                plane.insertAdjacentHTML('afterbegin', svgHtml);
 
-            <% if (locals.message) { %>
-                <div class="hint-box"><%= message %></div>
-            <% } %>
+                // Walking logic
+                const prev = document.getElementById('node-<%= locals.previousStep %>');
+                const curr = document.getElementById('node-<%= locals.currentStep %>');
 
-            <div class="riddle-text">
-                "<%= riddle.question %>"
-            </div>
+                if (prev && curr && "<%= locals.previousStep %>" !== "<%= locals.currentStep %>") {
+                    avatar.style.left = prev.style.left;
+                    avatar.style.top = prev.style.top;
+                    setTimeout(() => {
+                        avatar.classList.add('walking-anim');
+                        avatar.style.left = curr.style.left;
+                        avatar.style.top = curr.style.top;
+                        setTimeout(() => avatar.classList.remove('walking-anim'), 1500);
+                    }, 600);
+                } else if (curr) {
+                    avatar.style.left = curr.style.left;
+                    avatar.style.top = curr.style.top;
+                }
 
-            <form action="/verify" method="POST">
-                <input type="hidden" name="stepNumber" value="<%= riddle.stepNumber %>">
-                <input type="text" name="userAnswer" placeholder="ENTER SOLUTION..." required autocomplete="off" autofocus>
-                <br>
-                <button class="submit-btn" type="submit">Submit</button>
-            </form>
+                // Initial Scroll Position
+                wrapper.scrollLeft = 1150; wrapper.scrollTop = 1150;
+            };
 
-            <% if (locals.error) { %>
-                <p class="error"><%= error %></p>
-            <% } %>
+            // Drag Logic
+            const slider = document.getElementById('mapWrapper');
+            let isDown = false; let startX, startY, sL, sT;
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true; startX = e.pageX - slider.offsetLeft; startY = e.pageY - slider.offsetTop;
+                sL = slider.scrollLeft; sT = slider.scrollTop;
+            });
+            slider.addEventListener('mouseup', () => isDown = false);
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                const x = e.pageX - slider.offsetLeft; const y = e.pageY - slider.offsetTop;
+                slider.scrollLeft = sL - (x - startX) * 1.5; slider.scrollTop = sT - (y - startY) * 1.5;
+            });
+        </script>
 
-            <button type="button" id="askHintBtn" class="ask-hint-btn" onclick="triggerWarning()">[ Request Assistance ]</button>
+    <% } else { %>
+        <div class="game-container <%= locals.victory ? 'victory-container' : '' %>">
             
-            <div id="systemWarningBox" class="system-warning">
-                <p>> SYSTEM WARNING: Brain capacity deemed insufficient.</p>
-                <p>> Are you seriously giving up already?</p>
-                <button type="button" class="warn-btn btn-no" onclick="cancelHint()">ABORT</button>
-                <button type="button" class="warn-btn btn-yes" onclick="revealHint()">ADMIT DEFEAT</button>
-            </div>
+            <% if (locals.startScreen) { %>
+                <h1>The Enigma Project</h1>
+                <p>Welcome, Operative. Decipher the linked sequence.</p>
+                <form action="/map" method="GET"><input type="hidden" name="step" value="1"><button class="submit-btn" type="submit">INITIALIZE</button></form>
 
-            <div id="hintDisplay" class="revealed-hint">
-                > DECRYPTED HINT: <%= riddle.hint %>
-            </div>
+            <% } else if (locals.victory) { %>
+                <h1 class="victory-title">ACCESS GRANTED</h1>
+                <p>System override complete.</p>
+                <form action="/" method="GET"><button class="submit-btn" style="color:var(--success-color); border-color:var(--success-color);" type="submit">REBOOT</button></form>
+            
+            <% } else { %>
+                <h1>Level <%= riddle.stepNumber %></h1>
+                <% if (locals.passedHint) { %> <div class="hint-box">CLUE: <%= passedHint %></div> <% } %>
+                <div class="riddle-text">"<%= riddle.question %>"</div>
 
-        <% } %>
+                <form action="/verify" method="POST">
+                    <input type="hidden" name="stepNumber" value="<%= riddle.stepNumber %>">
+                    <input type="hidden" name="passedHint" value="<%= locals.passedHint || '' %>">
+                    <input type="text" name="userAnswer" placeholder="SOLUTION..." required autocomplete="off" autofocus>
+                    <br><button class="submit-btn" type="submit">SUBMIT</button>
+                </form>
 
-    </div>
+                <% if (locals.error) { %> <p class="error"><%= error %></p> <% } %>
 
-    <script>
-        function triggerWarning() {
-            // Hide the 'Ask' button and show the red warning box
-            document.getElementById('askHintBtn').style.display = 'none';
-            document.getElementById('systemWarningBox').style.display = 'block';
-        }
+                <button type="button" id="askBtn" class="ask-hint-btn" onclick="showWarn()">[ Request Assistance ]</button>
+                <div id="warn" class="system-warning">
+                    <p>> Cognitive capacity deemed insufficient. Admit defeat?</p>
+                    <button type="button" class="warn-btn" onclick="hideWarn()">ABORT</button>
+                    <button type="button" class="warn-btn btn-yes" onclick="showHint()">YES</button>
+                </div>
+                <div id="hDisplay" class="revealed-hint">> HINT: <%= riddle.hint %></div>
 
-        function cancelHint() {
-            // Hide the warning box and bring back the 'Ask' button
-            document.getElementById('systemWarningBox').style.display = 'none';
-            document.getElementById('askHintBtn').style.display = 'inline-block';
-        }
+                <script>
+                    function showWarn() { document.getElementById('askBtn').style.display='none'; document.getElementById('warn').style.display='block'; }
+                    function hideWarn() { document.getElementById('warn').style.display='none'; document.getElementById('askBtn').style.display='inline-block'; }
+                    function showHint() { document.getElementById('warn').style.display='none'; document.getElementById('hDisplay').style.display='block'; }
+                </script>
+            <% } %>
+        </div>
+    <% } %>
 
-        function revealHint() {
-            // Hide the warning box and show the glowing yellow hint
-            document.getElementById('systemWarningBox').style.display = 'none';
-            document.getElementById('hintDisplay').style.display = 'block';
-        }
-    </script>
 </body>
 </html>

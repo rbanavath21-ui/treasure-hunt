@@ -101,44 +101,80 @@ const riddles = [
 ];
 
 // --- ROUTES ---
+
 // 1. The Home / Landing Page
 app.get('/', (req, res) => {
-    // Pass a flag to tell the frontend to show the Start Screen
     res.render('index', { startScreen: true }); 
 });
 
-// 2. The Route to Start the Game
-app.get('/play', (req, res) => {
-    // Load the first riddle when they click "Initialize"
-    res.render('index', { riddle: riddles[0] }); 
+// 2. The New Map Screen Route
+// 2. The New Map Screen Route
+app.get('/map', (req, res) => {
+    const step = parseInt(req.query.step) || 1;
+    // We grab the previous step so we know where to start the walking animation
+    const prevStep = parseInt(req.query.prev) || step; 
+    const hint = req.query.hint || null;
+
+    if (step > riddles.length) {
+        return res.render('index', { victory: true });
+    }
+
+    res.render('index', { 
+        mapScreen: true, 
+        currentStep: step, 
+        previousStep: prevStep, // Pass this to the frontend!
+        totalSteps: riddles.length,
+        passedHint: hint
+    });
 });
 
+// ... Keep your app.get('/play/:step') route the same ...
+
+// 4. The Verify Route
 app.post('/verify', (req, res) => {
     const userStep = parseInt(req.body.stepNumber);
     const userAnswer = req.body.userAnswer.trim().toLowerCase();
+    const passedHint = req.body.passedHint;
     
     const currentRiddle = riddles.find(r => r.stepNumber === userStep);
 
     if (userAnswer === currentRiddle.answer) {
-        // Correct Answer! 
-        const nextRiddle = riddles.find(r => r.stepNumber === userStep + 1);
-        
-        if (nextRiddle) {
-            // Still playing: Pass the user's successful answer forward as the hint!
-            res.render('index', { 
-                riddle: nextRiddle, 
-                message: `Correct! Your hint is: ${currentRiddle.answer.toUpperCase()}` 
-            });
-        } else {
-            // THEY WON! No more riddles in the array. Pass the victory flag.
-            res.render('index', { victory: true });
-        }
+        const nextStep = userStep + 1;
+        const newHintText = currentRiddle.answer.toUpperCase();
+        // Pass the userStep as the 'prev' variable so the map knows where they came from
+        res.redirect(`/map?step=${nextStep}&hint=${newHintText}&prev=${userStep}`);
     } else {
-        // WRONG ANSWER! Reload the page with an error message.
-        res.render('index', { 
-            riddle: currentRiddle, 
-            error: "ACCESS DENIED: Incorrect solution." 
-        });
+        res.render('index', { riddle: currentRiddle, error: "ACCESS DENIED.", passedHint: passedHint });
+    }
+});
+
+// 3. The Route to load a specific question
+app.get('/play/:step', (req, res) => {
+    const step = parseInt(req.params.step);
+    const riddle = riddles.find(r => r.stepNumber === step);
+    
+    res.render('index', { 
+        riddle: riddle, 
+        passedHint: req.query.hint // Bring the hint into the question screen
+    }); 
+});
+
+// 4. The Verify Route
+// 4. The Verify Route
+app.post('/verify', (req, res) => {
+    const userStep = parseInt(req.body.stepNumber);
+    const userAnswer = req.body.userAnswer.trim().toLowerCase();
+    const passedHint = req.body.passedHint;
+    
+    const currentRiddle = riddles.find(r => r.stepNumber === userStep);
+
+    if (userAnswer === currentRiddle.answer) {
+        const nextStep = userStep + 1;
+        const newHintText = currentRiddle.answer.toUpperCase();
+        // Pass the userStep as the 'prev' variable so the map knows where they came from
+        res.redirect(`/map?step=${nextStep}&hint=${newHintText}&prev=${userStep}`);
+    } else {
+        res.render('index', { riddle: currentRiddle, error: "ACCESS DENIED.", passedHint: passedHint });
     }
 });
 // Start the server
