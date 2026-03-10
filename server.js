@@ -1,19 +1,21 @@
-require('dotenv').config();
 const express = require('express');
+const session = require('express-session'); // <--- ADDED
 const mongoose = require('mongoose');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse form data and JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// Serve static files (like your CSS and images) from the 'public' folder
 app.use(express.static('public'));
-
-// Set EJS as the view engine
 app.set('view engine', 'ejs');
+
+// <--- ADDED: THE SECURE SESSION ENGINE --->
+app.use(session({
+    secret: 'enigma_hacker_secret_key_2026', 
+    resave: false,
+    saveUninitialized: true
+}));
 
 // MongoDB Connection (Commented out until we create the .env file)
 /*
@@ -125,82 +127,82 @@ app.locals.riddles = riddles;
 // --- ROUTES ---
 
 // 1. The Home / Landing Page
+// 1. The Secure Home Page
 app.get('/', (req, res) => {
+    // When they hit start, the server secretly creates a file for them
+    req.session.currentStep = 1;
+    req.session.previousStep = 1;
+    req.session.attempts = 3;
+    req.session.passedHint = null;
     res.render('index', { startScreen: true }); 
 });
 
-// 2. The Treasure Map Screen Route
+// 2. The Secure Map Screen
 app.get('/map', (req, res) => {
-    const step = parseInt(req.query.step) || 1;
-    const prevStep = parseInt(req.query.prev) || step; 
-    const hint = req.query.hint || null;
+    if (!req.session.currentStep) return res.redirect('/'); // Kick out hackers bypassing the start screen
 
-    if (step > riddles.length) {
+    if (req.session.currentStep > riddles.length) {
         return res.render('index', { victory: true });
     }
 
     res.render('index', { 
         mapScreen: true, 
-        currentStep: step, 
-        previousStep: prevStep, 
-        passedHint: hint
+        currentStep: req.session.currentStep, 
+        previousStep: req.session.previousStep, 
+        passedHint: req.session.passedHint
     });
 });
 
-// 3. The Route to load a specific question
-app.get('/play/:step', (req, res) => {
-    const step = parseInt(req.params.step);
-    const riddle = riddles.find(r => r.stepNumber === step);
+// 3. The Secure Play Route (No more /:step in the URL!)
+app.get('/play', (req, res) => {
+    if (!req.session.currentStep) return res.redirect('/');
     
+    const riddle = riddles.find(r => r.stepNumber === req.session.currentStep);
     res.render('index', { 
         riddle: riddle, 
-        passedHint: req.query.hint,
-        // Give the player 3 attempts when they load the level
-        attempts: 3 
+        passedHint: req.session.passedHint,
+        attempts: req.session.attempts 
     }); 
 });
 
-// 4. The Verify Route (Thematic error screen)
+// 4. The Secure Verify Route
 app.post('/verify', (req, res) => {
-    const userStep = parseInt(req.body.stepNumber);
-    const userAnswer = req.body.userAnswer.trim().toLowerCase();
-    const passedHint = req.body.passedHint;
-    
-    // NEW: Get current attempts from the hidden form input (default to 3 if missing)
-    let attempts = parseInt(req.body.attempts) || 3; 
-    
-    const currentRiddle = riddles.find(r => r.stepNumber === userStep);
+    if (!req.session.currentStep) return res.redirect('/');
 
-    // FIX: Check if the answer is an Array (like Ganesha) or a single String
+    const userAnswer = req.body.userAnswer.trim().toLowerCase(); // We ONLY trust the typed answer now
+    const currentStep = req.session.currentStep;
+    const currentRiddle = riddles.find(r => r.stepNumber === currentStep);
+
     let isCorrect = false;
     let actualAnswer = "";
 
     if (Array.isArray(currentRiddle.answer)) {
         isCorrect = currentRiddle.answer.includes(userAnswer);
-        actualAnswer = currentRiddle.answer[0]; // Grab the first one to use as the hint
+        actualAnswer = currentRiddle.answer[0]; 
     } else {
         isCorrect = (userAnswer === currentRiddle.answer);
         actualAnswer = currentRiddle.answer;
     }
 
     if (isCorrect) {
-        const nextStep = userStep + 1;
-        const newHintText = actualAnswer.toUpperCase();
-        res.redirect(`/map?step=${nextStep}&hint=${newHintText}&prev=${userStep}`);
+        req.session.previousStep = currentStep;
+        req.session.currentStep += 1;
+        req.session.passedHint = actualAnswer.toUpperCase();
+        req.session.attempts = 3; // Reset lives for the next level
+        res.redirect('/map');
     } else {
-        // WRONG ANSWER LOGIC (SYSTEM INTEGRITY)
-        attempts -= 1; 
+        // WRONG ANSWER LOGIC
+        req.session.attempts -= 1; 
         
-        if (attempts <= 0) {
-            // Out of lives! Send the crash screen
-            res.render('index', { systemCrash: true, currentStep: userStep });
+        if (req.session.attempts <= 0) {
+            req.session.attempts = 3; // Reset lives so they can try again
+            res.render('index', { systemCrash: true, currentStep: currentStep });
         } else {
-            // Still have lives, reload the level with an error and updated attempts
             res.render('index', { 
                 riddle: currentRiddle, 
                 error: "ACCESS DENIED.", 
-                passedHint: passedHint, 
-                attempts: attempts 
+                passedHint: req.session.passedHint, 
+                attempts: req.session.attempts 
             });
         }
     }

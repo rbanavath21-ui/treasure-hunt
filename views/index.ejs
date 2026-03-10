@@ -135,7 +135,7 @@
                     
                     <div class="node-container <%= statusClass %>" style="left: <%= xPos %>%; top: <%= yPos %>px;" id="container-<%= i %>">
                         <% if (i === locals.currentStep) { %> 
-                            <a href="/play/<%= i %>?hint=<%= locals.passedHint || '' %>" class="level-node" id="node-<%= i %>" onclick="playClick()">
+                            <a href="/play" class="level-node" id="node-<%= i %>" onclick="playClick()">
                                 <span class="node-icon"><%= riddle.icon %></span>
                             </a>
                         <% } else { %>
@@ -216,9 +216,8 @@
                     <h1 style="color:var(--error-color); font-size: 3em;">PROTOCOL CRASHED</h1>
                     <p style="color:#aaa;">System integrity has been fully compromised. Retrying from your last node is required.</p>
                     <form action="/map" method="GET">
-                        <input type="hidden" name="step" value="<%= locals.currentStep %>">
-                        <button class="btn" style="background:var(--error-color);" type="submit" onclick="playClick()">REBOOT NODE</button>
-                    </form>
+    <button class="btn" style="background:var(--error-color);" type="submit" onclick="playClick()">REBOOT NODE</button>
+</form>
 
                 <% } else if (locals.victory) { %>
                     <h1 style="color:var(--success-color); font-size: 3em;">ACCESS GRANTED</h1>
@@ -242,13 +241,10 @@
                     </p>
                     
                     <form action="/verify" method="POST">
-                        <input type="hidden" name="stepNumber" value="<%= riddle.stepNumber %>">
-                        <input type="hidden" name="passedHint" value="<%= locals.passedHint || '' %>">
-                        <input type="hidden" name="attempts" value="<%= locals.attempts %>">
-                        <input type="text" id="answerInput" name="userAnswer" placeholder="DECRYPT SOLUTION..." required autofocus autocomplete="off" oninput="playType()"
-                               style="width:80%; padding:15px; background:rgba(0,0,0,0.8); color:var(--primary-glow); border:1px solid var(--primary-glow); text-align:center; font-family: 'Share Tech Mono', monospace; font-size: 1.2em;">
-                        <br><br><button class="btn" type="submit" onclick="playClick()">Verify</button>
-                    </form>
+    <input type="text" id="answerInput" name="userAnswer" placeholder="DECRYPT SOLUTION..." required autofocus autocomplete="off" oninput="playType()"
+           style="width:80%; padding:15px; background:rgba(0,0,0,0.8); color:var(--primary-glow); border:1px solid var(--primary-glow); text-align:center; font-family: 'Share Tech Mono', monospace; font-size: 1.2em;">
+    <br><br><button class="btn" type="submit" onclick="playClick()">Verify</button>
+</form>
                     
                     <% if (locals.error) { %> 
                         <p style="color:var(--error-color); margin-top: 15px; text-shadow: 0 0 10px var(--error-color);"><%= error %></p> 
