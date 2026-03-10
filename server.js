@@ -22,75 +22,98 @@ mongoose.connect(process.env.MONGO_URI)
     .catch((err) => console.log('Database connection error: ', err));
 */
 
-// --- THE ENIGMA MIXED CHAIN ---
+// --- THE ENIGMA PROTOCOL: TREASURE HUNT ---
 const riddles = [
-    // --- INDIAN MYTHOLOGY ---
+    // --- Levels 1-6 (Mapped from reference image) ---
+    // Node 1: Riddle Cave (Candle)
     { 
         stepNumber: 1, 
-        question: "He is the elephant-headed Lord of Beginnings, the remover of obstacles. Who is he?", 
-        // FIX: Use an array to allow multiple acceptable answers
+        label: "Riddle Cave", 
+        icon: "🕯️", 
+        question: "Elephant-headed Lord of Beginnings, the remover of obstacles. Who is he?", 
         answer: ["ganesha", "ganesh", "vinayaka", "vinayakudu"],
         hint: "Son of Shiva and Parvati."
     },
+    // Node 2: Fun Puzzle Island (Palm Island)
     { 
         stepNumber: 2, 
-        question: "Lord Ganesha's traditional vehicle (vahana) is Mooshika, which is what small, scurrying animal?", 
+        label: "Fun Puzzle Island", 
+        icon: "🏝️", 
+        question: "Lord Ganesha's traditional vehicle...", 
         answer: "mouse",
         hint: "Eats cheese, gets chased by cats."
     },
-    
-    // --- TECH & CODING ---
+    // Node 3: Image Mystery Forest (Pine Tree)
     { 
         stepNumber: 3, 
-        question: "In 1968, Douglas Engelbart invented a computer hardware device that shares its name with that exact animal. What is it?", 
+        label: "Image Mystery Forest", 
+        icon: "🌲", 
+        question: "Engelbart invented computer hardware...", 
         answer: "mouse",
         hint: "You click it."
     },
+    // Node 4: Word Decoder Temple (Temple)
     { 
         stepNumber: 4, 
-        question: "When you move that device on your desk, what specific blinking or solid indicator moves on your screen?", 
+        label: "Word Decoder Temple", 
+        icon: "🏛️", 
+        question: "blinking indicator on your screen...", 
         answer: "cursor",
-        hint: "It shows where you are about to type."
+        hint: "shows where you type."
     },
+    // Node 5: Logic Dungeon (Cog Gear)
     { 
         stepNumber: 5, 
-        question: "There is an AI code editor named 'Cursor' that is built as a fork of which incredibly popular Microsoft code editor?", 
+        label: "Logic Dungeon", 
+        icon: "⚙️", 
+        question: "AI code editor 'Cursor' fork...", 
         answer: "vscode",
         hint: "Visual Studio ____"
     },
-
-    // --- CURRENT AFFAIRS / AI ---
+    // Node 6: Extended Map (Extended for 10-step total)
     { 
         stepNumber: 6, 
-        question: "If you don't know how to write code in VS Code, you might ask an AI for help in 2026. What is the name of Google's flagship AI model?", 
+        label: "Gem Cavern", 
+        icon: "💎", 
+        question: "Google's flagship AI model...", 
         answer: "gemini",
-        hint: "Named after a constellation."
+        hint: "constellation."
     },
 
-    // --- ASTROLOGY & RIDDLES ---
+    // --- Levels 7-10 (Device new fantasy-themed labels) ---
+    // Node 7: Extended Map
     { 
         stepNumber: 7, 
-        question: "In astrology, the Gemini zodiac sign is represented by Castor and Pollux, who share what specific sibling relationship?", 
+        label: "Map Chamber", 
+        icon: "🗺️", 
+        question: "Gemini zodiac sign Castor and Pollux...", 
         answer: "twins",
-        hint: "Two siblings born at the exact same time."
+        hint: "siblings born at exact same time."
     },
+    // Node 8: Extended Map
     { 
         stepNumber: 8, 
-        question: "Riddle: We are twins sitting on opposite sides of a bridge. We see everything, but we never see each other. What are we?", 
+        label: "Scroll Library", 
+        icon: "📜", 
+        question: "Riddle: twins on opposite sides of bridge...", 
         answer: "eyes",
-        hint: "You use them to read this."
+        hint: "use them to read this."
     },
-
-    // --- BIOLOGY & TECH ---
+    // Node 9: Extended Map
     { 
         stepNumber: 9, 
-        question: "The colored part of this organ is named after the Greek goddess of the rainbow. What is it called?", 
+        label: "Coin Treasury", 
+        icon: "💰", 
+        question: "colored part of this organ...", 
         answer: "iris",
-        hint: "It controls the size of your pupil."
+        hint: "controls pupil size."
     },
+    // Node 10: Final Treasure (Crown)
     { 
         stepNumber: 10, 
-        question: "To secure a top-secret physical facility, you might use a biometric scanner that scans either your fingerprint or your...", 
+        label: "Final Treasure", 
+        icon: "👑", 
+        question: "biometric scanner fingerprint or...", 
         answer: "iris",
         hint: "Eye scanner."
     }
@@ -98,7 +121,7 @@ const riddles = [
 
 // Set global variable for EJS templates
 app.locals.totalSteps = riddles.length;
-
+app.locals.riddles = riddles;
 // --- ROUTES ---
 
 // 1. The Home / Landing Page
@@ -106,7 +129,7 @@ app.get('/', (req, res) => {
     res.render('index', { startScreen: true }); 
 });
 
-// 2. The Saga Map Screen Route
+// 2. The Treasure Map Screen Route
 app.get('/map', (req, res) => {
     const step = parseInt(req.query.step) || 1;
     const prevStep = parseInt(req.query.prev) || step; 
@@ -131,15 +154,20 @@ app.get('/play/:step', (req, res) => {
     
     res.render('index', { 
         riddle: riddle, 
-        passedHint: req.query.hint 
+        passedHint: req.query.hint,
+        // Give the player 3 attempts when they load the level
+        attempts: 3 
     }); 
 });
 
-// 4. The Verify Route (Cleaned up!)
+// 4. The Verify Route (Thematic error screen)
 app.post('/verify', (req, res) => {
     const userStep = parseInt(req.body.stepNumber);
     const userAnswer = req.body.userAnswer.trim().toLowerCase();
     const passedHint = req.body.passedHint;
+    
+    // NEW: Get current attempts from the hidden form input (default to 3 if missing)
+    let attempts = parseInt(req.body.attempts) || 3; 
     
     const currentRiddle = riddles.find(r => r.stepNumber === userStep);
 
@@ -160,7 +188,21 @@ app.post('/verify', (req, res) => {
         const newHintText = actualAnswer.toUpperCase();
         res.redirect(`/map?step=${nextStep}&hint=${newHintText}&prev=${userStep}`);
     } else {
-        res.render('index', { riddle: currentRiddle, error: "ACCESS DENIED.", passedHint: passedHint });
+        // WRONG ANSWER LOGIC (SYSTEM INTEGRITY)
+        attempts -= 1; 
+        
+        if (attempts <= 0) {
+            // Out of lives! Send the crash screen
+            res.render('index', { systemCrash: true, currentStep: userStep });
+        } else {
+            // Still have lives, reload the level with an error and updated attempts
+            res.render('index', { 
+                riddle: currentRiddle, 
+                error: "ACCESS DENIED.", 
+                passedHint: passedHint, 
+                attempts: attempts 
+            });
+        }
     }
 });
 
